@@ -131,3 +131,9 @@ Planning all possible paths in image 1, using the TFCN-RGB model trained without
 ```bash
 python experiments.py --rgb --test 1
 ```
+
+## Comparisons
+
+The code used to compare our method with other methods is located in the `comparisons` directory.
+Inside each of the comparisons subdirectories, you can find scripts that will help you run 
+the comparisons and obtain the results.
