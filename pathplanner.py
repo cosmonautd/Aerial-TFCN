@@ -17,10 +17,9 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--extra", action="store_true", help="Run planner on extra images")
 ap.add_argument("--rgb", help="Use TFCN-RGB", action="store_true")
 ap.add_argument("--grayscale", help="Use TFCN-G", action="store_true")
-ap.add_argument("--hsv", help="Use TFCN-HSV", action="store_true")
+ap.add_argument("--extra", action="store_true", help="Run planner on extra images")
 ap.add_argument(
     "--test", type=int, default=1, required=False, help="Select a map to use as test"
 )
@@ -33,9 +32,9 @@ if args.rgb:
 elif args.grayscale:
     COLOR = "grayscale"
     WEIGHTS_DIR = "grayscale"
-elif args.hsv:
-    COLOR = "hsv"
-    WEIGHTS_DIR = "hsv"
+else:
+    print("Please select a model using --rgb or --grayscale")
+    exit()
 
 root = "."
 

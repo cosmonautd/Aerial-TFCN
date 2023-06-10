@@ -16,8 +16,6 @@ root = "."
 ap = argparse.ArgumentParser()
 ap.add_argument("--rgb", help="Use TFCN-RGB", action="store_true")
 ap.add_argument("--grayscale", help="Use TFCN-G", action="store_true")
-ap.add_argument("--hsv", help="Use TFCN-HSV", action="store_true")
-ap.add_argument("--rgbh", help="Use TFCN-RGBH", action="store_true")
 ap.add_argument(
     "--test", type=int, default=1, required=False, help="Select a map to use as test"
 )
@@ -30,12 +28,9 @@ if args.rgb:
 elif args.grayscale:
     COLOR = "grayscale"
     WEIGHTS_DIR = "grayscale"
-elif args.hsv:
-    COLOR = "hsv"
-    WEIGHTS_DIR = "hsv"
-elif args.rgbh:
-    COLOR = "rgbh"
-    WEIGHTS_DIR = "rgbh"
+else:
+    print("Please select a model using --rgb or --grayscale")
+    exit()
 
 X_path = os.path.join(root, "dataset/X")
 Y_path = os.path.join(root, "dataset/Y")

@@ -38,6 +38,9 @@ if args.rgb:
     COLOR = "rgb"
 elif args.grayscale:
     COLOR = "grayscale"
+else:
+    print("Please select a model using --rgb or --grayscale")
+    exit()
 
 output_path = os.path.join(root, "results")
 output_file = "data-%s-%s.json" % ("all" if args.outliers else "no-outliers", COLOR)
