@@ -1,28 +1,11 @@
 # Python
 __pycache__
 
-# Latex
-*.aux
-*.bbl
-*.blg
-*.log
-*.synctex.gz
-*.nav
-*.out
-*.snm
-*.toc
-*.brf
-*.lof
-*.lot
-*.idx
-*.nlo
-
 # IDE
 .idea
 
 # Project
 __weights__
-article.pdf
 *paths7
 *paths8
 *output
@@ -31,6 +14,3 @@ article.pdf
 presentation
 *results
 comparisons/semantic segmentation/weights
-results_ale
-aerial_ssdd
-aeroscapes
