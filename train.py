@@ -1,5 +1,4 @@
 import os
-import cv2 as cv
 import numpy as np
 import sklearn.model_selection
 import argparse
@@ -11,24 +10,12 @@ import toolbox
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
-try:
-    import google.colab
+running = "local"
+colab = []
 
-    running = "colab"
-    colab = [running]
-except:
-    running = "local"
-    colab = []
-
-if running in colab:
-    from google.colab import drive, auth
-
-    drive.mount("/content/drive")
-    root = "drive/My Drive/Colab Notebooks/TFCN + Conv2DTranspose (keras)"
-else:
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    root = "."
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+root = "."
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--rgb", help="Use TFCN-RGB", action="store_true")
@@ -58,12 +45,10 @@ elif args.rgbh:
 X_path = os.path.join(root, "dataset/X")
 Y_path = os.path.join(root, "dataset/Y")
 
-# Criação de diretório para armazenar os pesos treinados
 W_path = os.path.join(root, "weights", DIR, "all" if args.outliers else "no outliers")
 if not os.path.exists(W_path):
     os.makedirs(W_path)
 
-# Criação de diretório para armazenar os gráficos de perda
 L_path = os.path.join(root, "losses", DIR, "all" if args.outliers else "no outliers")
 if not os.path.exists(L_path):
     os.makedirs(L_path)
@@ -77,7 +62,6 @@ for i, imagename in enumerate(sorted(os.listdir(X_path))[:n_samples]):
     if imagename.endswith(".jpg"):
         x = toolbox.imread(os.path.join(X_path, imagename), color=COLOR)
         y = toolbox.imread(os.path.join(Y_path, imagename), color="grayscale")
-        # y = cv.resize(y, (125, 125))/np.max(y)
         y = y / 255
         X.append(x)
         Y.append(y)
@@ -88,17 +72,13 @@ Y = np.expand_dims(np.array(Y), 3).astype(np.float32)
 cross_val = sklearn.model_selection.LeaveOneOut()
 cross_val.get_n_splits(X)
 
-# Total de amostras no dataset original
 N = len(X)
 
-# Percorre as divisões de conjuntos de treino e teste
 # Leave One Out
 for train_index, test_index in cross_val.split(X):
-
     if test_index + 1 != args.test:
         continue
 
-    # Índice do conjunto de validação
     val_index = (test_index + 1) % N
     train_index = np.array([x for x in train_index if x not in val_index])
 
@@ -128,7 +108,6 @@ for train_index, test_index in cross_val.split(X):
 
     # Find optimal c based on training data
 
-    import torch
     import graphmapx
     import itertools
 
@@ -141,13 +120,11 @@ for train_index, test_index in cross_val.split(X):
 
     def optimize():
         def func(c, r=8):
-
             exp = list()
 
             T = tfcn.predict(data.x_train)
 
             for i in range(len(T)):
-
                 positive_keypoints = toolbox.imread(
                     os.path.join(
                         positive_keypoints_path, "aerial%02d.jpg" % (train_index[i] + 1)
@@ -178,7 +155,6 @@ for train_index, test_index in cross_val.split(X):
                 combinations = list(itertools.combinations(keypoints, 2))
 
                 for counter in range(len(combinations)):
-
                     (s, t) = combinations[counter]
 
                     path, found = router.route(G, s, t, t_matrix)
@@ -196,7 +172,6 @@ for train_index, test_index in cross_val.split(X):
                 combinations = list(itertools.combinations(keypoints, 2))
 
                 for counter in range(len(combinations)):
-
                     (s, t) = combinations[counter]
 
                     path, found = router.route(G, s, t, t_matrix)
@@ -226,16 +201,11 @@ for train_index, test_index in cross_val.split(X):
                     false_negative += 1
 
             recall = true_positive / (true_positive + false_negative)
-            accuracy = (true_positive + true_negative) / (
-                true_positive + true_negative + false_positive + false_negative
-            )
 
             frdr = recall
             irdr = true_negative / (true_negative + false_positive)
-            fdr = accuracy
 
             score_mean = np.mean(score)
-            score_std = np.std(score)
 
             output = 1 - (2 * score_mean + frdr + 3 * irdr) / 6
 
@@ -245,10 +215,6 @@ for train_index, test_index in cross_val.split(X):
             )
 
             return output
-
-        # c0 = 0.1
-        # ret = scipy.optimize.minimize(func, c0, method='Powell')
-        # c = ret.x[0]
 
         res = scipy.optimize.minimize_scalar(
             func,

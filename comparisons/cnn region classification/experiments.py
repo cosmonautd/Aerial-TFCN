@@ -296,7 +296,7 @@ def get_results(datapath):
     )
 
     print("Avg path length: %d" % int(numpy.round(numpy.mean(lengths))))
-    print("Avg path quality: %.3f (+/- %.3f)" % (numpy.mean(score), numpy.std(score)))
+    print("Avg path safety: %.3f (+/- %.3f)" % (numpy.mean(score), numpy.std(score)))
 
     precision = true_positive / (true_positive + false_positive)
     recall = true_positive / (true_positive + false_negative)

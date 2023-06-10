@@ -1,19 +1,14 @@
 import os
-import logging
 import warnings
 import collections
 
-# Definição do nível de log do Python e TensorFlow
 warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
-import tensorflow
-
 from contextlib import redirect_stderr
 
 with redirect_stderr(open(os.devnull, "w")):
-    # Importação de modelos, camadas, datasets e utilidades do Keras
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.layers import (
         Conv2D,
@@ -24,7 +19,6 @@ with redirect_stderr(open(os.devnull, "w")):
     )
     from tensorflow.keras.callbacks import ModelCheckpoint
 
-    # Importação de otimizações para a CNN
     from tensorflow.keras.layers import BatchNormalization
     from tensorflow.keras.callbacks import EarlyStopping
     from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -40,7 +34,6 @@ class TFCN:
 
     def __tfcn__(self, dims):
         weight_decay = 1e-3
-        # Organização sequencial de camadas
         M = Sequential()
         M.add(
             Conv2D(
@@ -114,13 +107,11 @@ class TFCN:
         )
         M.add(UpSampling2D(size=(2, 2), interpolation="bilinear"))
 
-        # Compilação do modelo. Definição da função de perda e algoritmo de treinamento.
         M.compile(loss="mean_squared_error", optimizer="adam")
 
         return M
 
     def train(self, data, wp="weights.hdf5"):
-        # Aumento de dados
         datagen_args = dict(
             horizontal_flip=True,
             vertical_flip=True,
@@ -148,9 +139,7 @@ class TFCN:
         vx = datagen_vx.flow(data.x_val, seed=datagen_seed, batch_size=16)
         vy = datagen_vy.flow(data.y_val, seed=datagen_seed, batch_size=16)
 
-        # Definição de um callback para salvamento da melhor combinação de pesos
         checkpoint = ModelCheckpoint(wp, verbose=1, save_best_only=True)
-        # Definição dos callbacks
         callbacks = [checkpoint, EarlyStopping(min_delta=0.0001, patience=20)]
 
         tgen = (pair for pair in zip(tx, ty))

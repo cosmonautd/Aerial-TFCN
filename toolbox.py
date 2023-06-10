@@ -94,7 +94,6 @@ def score(path, ground_truth, r):
     penalty = 0.03
     T = list()
     for px in path:
-        # t.append(np.mean(ground_truth[px[0], px[1]])/255)
         h, w, _ = ground_truth.shape
         a = max(0, px[0] - int(r / 2))
         b = min(h - 1, px[0] + int(r / 2))
@@ -143,7 +142,6 @@ def save_image(path, images):
     plt.close(fig)
 
 
-# Função para plot dos gráficos de perda durante o treinamento
 def visualize_training(history, loo_id, lp, block=True):
     def plot():
         fig, ax = plt.subplots()

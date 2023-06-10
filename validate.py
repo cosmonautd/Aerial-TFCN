@@ -1,7 +1,6 @@
 import os
 import time
 import argparse
-import multiprocessing
 
 import cv2 as cv
 import numpy as np
@@ -10,15 +9,9 @@ import sklearn.model_selection
 import tfcnmodel
 import toolbox
 
-try:
-    from google.colab import drive, auth
-
-    drive.mount("/content/drive")
-    root = "drive/My Drive/Colab Notebooks/TFCN + Conv2DTranspose (keras)"
-except:
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    root = "."
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+root = "."
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--rgb", help="Use TFCN-RGB", action="store_true")
@@ -50,7 +43,6 @@ W_path = os.path.join(
     root, "weights", WEIGHTS_DIR, "all" if args.outliers else "no outliers"
 )
 
-# Diretório para as saídas do teste
 output_path__ = os.path.join(root, "results/maps")
 if not os.path.exists(output_path__):
     os.makedirs(output_path__)
@@ -64,7 +56,6 @@ for i, imagename in enumerate(sorted(os.listdir(X_path))[:n_samples]):
     if imagename.endswith(".jpg"):
         x = toolbox.imread(os.path.join(X_path, imagename), color=COLOR)
         y = toolbox.imread(os.path.join(Y_path, imagename), color="grayscale")
-        # y = cv.resize(y, (125, 125))/np.max(y)
         y = y / 255
         X.append(x)
         Y.append(y)
@@ -75,21 +66,17 @@ Y = np.expand_dims(np.array(Y), 3).astype(np.float32)
 cross_val = sklearn.model_selection.LeaveOneOut()
 cross_val.get_n_splits(X)
 
-# Total de amostras no dataset original
 N = len(X)
 
 TIME = []
 LOSS = []
 MSE = []
 
-# Percorre as divisões de conjuntos de treino e teste
 # Leave One Out
 for train_index, test_index in cross_val.split(X):
-
     if test_index + 1 != args.test:
         continue
 
-    # Índice do conjunto de validação
     val_index = (test_index + 1) % N
     train_index = np.array([x for x in train_index if x not in val_index])
 
@@ -124,7 +111,6 @@ for train_index, test_index in cross_val.split(X):
         ),
         [y],
     )
-    # toolbox.show_image([data.x_test/255, y])
 
     y = cv.resize(y, (125, 125))
     y__ = cv.resize(y__, (125, 125))
@@ -133,11 +119,5 @@ for train_index, test_index in cross_val.split(X):
     LOSS.append(test_loss)
     MSE.append((((y - y__) ** 2).mean(axis=None)))
 
-# print('Test loss:\n')
-# for L in LOSS: print('  %.3f' % L)
-
-# print('\nMSE:\n')
 for M in MSE:
     print("  %.3f" % M)
-
-# print('\nTime: %.3f (+/- %.3f) s' % (np.mean(TIME), np.std(TIME)))

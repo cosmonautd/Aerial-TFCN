@@ -18,6 +18,11 @@ ap.add_argument(
     default=None,
 )
 ap.add_argument(
+    "--disable-cut-threshold",
+    help="Disable cut threshold for region cutting",
+    action="store_true",
+)
+ap.add_argument(
     "--disable-path-smoothing",
     help="Disable path smoothing",
     action="store_true",
@@ -25,15 +30,9 @@ ap.add_argument(
 )
 args = ap.parse_args()
 
-try:
-    from google.colab import drive, auth
-
-    drive.mount("/content/drive")
-    root = "drive/My Drive/Colab Notebooks/TFCN + Conv2DTranspose (keras)"
-except:
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    root = "."
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+root = "."
 
 if args.rgb:
     COLOR = "rgb"
@@ -45,14 +44,11 @@ output_file = "data-%s-%s.json" % ("all" if args.outliers else "no-outliers", CO
 
 
 def main_experiment():
-    """ """
-    import cv2
     import time
     import json
     import tqdm
     import numpy as np
     import itertools
-    import scipy.interpolate
     import skimage.transform
 
     import toolbox
@@ -74,7 +70,7 @@ def main_experiment():
     images = ["aerial%02d.jpg" % (i + 1) for i in range(n_samples)]
 
     dataset = list()
-    for (_, _, filenames) in os.walk(ground_truth_path):
+    for _, _, filenames in os.walk(ground_truth_path):
         dataset.extend(filenames)
         break
 
@@ -84,8 +80,6 @@ def main_experiment():
     data = list()
 
     for i in tqdm.trange(len(selected), desc=" Input image "):
-        # for i in range(len(selected)):
-
         image_path = selected[i]
         image = toolbox.imread(os.path.join(dataset_path, image_path), color=COLOR)
         if COLOR == "grayscale":
@@ -119,13 +113,10 @@ def main_experiment():
 
         grid = toolbox.grid_list(image, r)
 
-        # th = cv2.calcHist(t_matrix, [0], None, [100], [0, 1])
-        # th = th.flatten()
-        # tv = np.arange(0, 1, 1/100)
-        # c = np.sum(th*tv)/np.sum(th)
-
         if args.fixed_cut_threshold is not None:
             c = args.fixed_cut_threshold
+        elif args.disable_cut_threshold:
+            c = 1
         else:
             C_file = os.path.join(w_path, "c_%02d.hdf5" % (i + 1))
             c = np.loadtxt(C_file).item() / 2
@@ -142,7 +133,6 @@ def main_experiment():
         smooth_paths = not args.disable_path_smoothing
 
         for counter in range(len(combinations)):
-
             (s, t) = combinations[counter]
 
             start_route_time = time.time()
@@ -171,7 +161,6 @@ def main_experiment():
         combinations = list(itertools.combinations(keypoints, 2))
 
         for counter in range(len(combinations)):
-
             (s, t) = combinations[counter]
 
             start_route_time = time.time()
@@ -199,7 +188,6 @@ def main_experiment():
 
 
 def get_results(datapath):
-    """ """
     import json
     import numpy
 
@@ -221,7 +209,6 @@ def get_results(datapath):
 
     for sample in data:
         if sample["image"] in images:
-
             matrix_time.append(sample["matrix_build_time"])
             graph_time.append(sample["graph_build_time"])
             route_time.append(sample["path_build_time"])
@@ -247,22 +234,21 @@ def get_results(datapath):
     graph_time = numpy.array(graph_time)
     route_time = numpy.array(route_time)
 
-    # print("Avg path length: %d" % int(numpy.round(numpy.mean(lengths))))
-    print("Avg path quality: %.3f (+/- %.3f)" % (numpy.mean(score), numpy.std(score)))
+    print("Avg path safety: %.3f (+/- %.3f)" % (numpy.mean(score), numpy.std(score)))
 
-    precision = true_positive / (true_positive + false_positive)
-    recall = true_positive / (true_positive + false_negative)
-    accuracy = (true_positive + true_negative) / (
-        true_positive + true_negative + false_positive + false_negative
+    recall = (
+        true_positive / (true_positive + false_negative) if true_positive > 0 else 0
+    )
+    accuracy = (
+        (true_positive + true_negative)
+        / (true_positive + true_negative + false_positive + false_negative)
+        if true_positive > 0
+        else 0
     )
 
     frdr = recall
     irdr = true_negative / (true_negative + false_positive)
     fdr = accuracy
-
-    # print("Accuracy: %.3f" % accuracy)
-    # print("Precision: %.3f" % precision)
-    # print("Recall: %.3f" % recall)
 
     print("Feasible route detection rate: %.3f" % frdr)
     print("Infeasible route detection rate: %.3f" % irdr)
@@ -295,6 +281,5 @@ def get_results(datapath):
     print("Evaluated samples:", len(matrix_time))
 
 
-# if not os.path.exists(os.path.join(output_path, output_file)):
 main_experiment()
 get_results(os.path.join(output_path, output_file))

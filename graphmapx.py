@@ -1,12 +1,3 @@
-""" The graphmap module provides methods to generate 
-    traversability graphs from traversability matrices.
-    Tools for path computation are also be provided.
-    Class RouteEstimator: defines a route estimator and its configuration.
-    Method tdi2graph: builds a graph from a traversability matrix
-    Method route: returns the best route between two regions
-    Method draw_graph: saves a graph as an image (optionally, draws paths)
-"""
-
 import cv2
 import numpy
 import matplotlib
@@ -20,7 +11,7 @@ def coord2(position, columns):
 
 
 def get_keypoints(image, grid):
-    """ """
+    """Get keypoints from image and grid"""
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Set up the SimpleBlobdetector with default parameters.
@@ -57,7 +48,6 @@ def get_keypoints(image, grid):
     for keypoint in keypoints:
         x = int(keypoint.pt[0])
         y = int(keypoint.pt[1])
-        size = int(keypoint.size)
         for i, (tlx, tly, sqsize) in enumerate(grid):
             if tlx <= x and x < tlx + sqsize:
                 if tly <= y and y < tly + sqsize:
@@ -66,8 +56,7 @@ def get_keypoints(image, grid):
     return indexes
 
 
-def get_keypoints_yx(image, grid):
-    """ """
+def get_keypoints_yx(image):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Set up the SimpleBlobdetector with default parameters.
@@ -110,7 +99,6 @@ def get_keypoints_yx(image, grid):
 
 
 def get_keypoints_overlap(image, grid, ov=3):
-    """ """
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Set up the SimpleBlobdetector with default parameters.
@@ -156,39 +144,12 @@ def get_keypoints_overlap(image, grid, ov=3):
     return indexes
 
 
-# def draw_graph(G, filename="traversability-graph.png", path=[]):
-
-#     G.vp.vfcolor = G.new_vertex_property("vector<double>")
-#     G.ep.ecolor = G.new_edge_property("vector<double>")
-#     G.ep.ewidth = G.new_edge_property("int")
-
-#     for v in G.vertices():
-#         diff = G.vp.traversability[v]
-#         G.vp.vfcolor[v] = [1/(numpy.sqrt(diff)/100), 1/(numpy.sqrt(diff)/100), 1/(numpy.sqrt(diff)/100), 1.0]
-#     for e in G.edges():
-#         G.ep.ewidth[e] = 6
-#         G.ep.ecolor[e] = [0.179, 0.203, 0.210, 0.8]
-
-#     for i, v in enumerate(path):
-#         G.vp.vfcolor[v] = [0, 0.640625, 0, 0.9]
-#         if i < len(path) - 1:
-#             for e in v.out_edges():
-#                 if e.target() == path[i+1]:
-#                     G.ep.ecolor[e] = [0, 0.640625, 0, 1]
-#                     G.ep.ewidth[e] = 10
-
-#     draw.graph_draw(G, pos=G.vp.pos, output_size=(1200, 1200), vertex_color=[0,0,0,1], vertex_fill_color=G.vp.vfcolor,\
-#                     edge_color=G.ep.ecolor, edge_pen_width=G.ep.ewidth, output=filename, edge_marker_size=4)
-
-# Ramer-Douglas-Peucker from https://stackoverflow.com/questions/2573997/reduce-number-of-points-in-line
-
-
 def _vec2d_dist(p1, p2):
     return (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
 
 
 def _vec2d_sub(p1, p2):
-    return (p1[0] - p2[0], p1[1] - p2[1])
+    return p1[0] - p2[0], p1[1] - p2[1]
 
 
 def _vec2d_mult(p1, p2):
@@ -200,7 +161,7 @@ def ramerdouglas(line, dist):
 
     'line' is a list-of-tuples, where each tuple is a 2D coordinate
 
-    Usage is like so:
+    Usage example:
 
     >>> myline = [(0.0, 0.0), (1.0, 2.0), (2.0, 1.0)]
     >>> simplified = ramerdouglas(myline, dist = 1.0)
@@ -227,15 +188,12 @@ def ramerdouglas(line, dist):
 
 
 class RouteEstimator:
-    """ """
-
     def __init__(self, r, c, grid):
         self.r = r
         self.c = c
         self.grid = grid
 
     def tm2graph(self, tmatrix):
-
         G = networkx.DiGraph()
 
         for i, row in enumerate(tmatrix):
@@ -253,7 +211,6 @@ class RouteEstimator:
         edges = list()
 
         for v in [vv for vv in G.nodes() if not G.nodes[vv]["cut"]]:
-
             (i, j) = G.nodes[v]["pos"][1], G.nodes[v]["pos"][0]
 
             top, bottom, left, right = (i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)
@@ -376,7 +333,6 @@ class RouteEstimator:
         return G
 
     def tm2graph_overlap(self, tmatrix):
-
         G = networkx.DiGraph()
 
         for i, row in enumerate(tmatrix):
@@ -394,7 +350,6 @@ class RouteEstimator:
         edges = list()
 
         for v in [vv for vv in G.nodes() if not G.nodes[vv]["cut"]]:
-
             (i, j) = G.nodes[v]["pos"][1], G.nodes[v]["pos"][0]
 
             top, bottom, left, right = (i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)
@@ -634,19 +589,6 @@ class RouteEstimator:
 
         return G
 
-    # def map_from_source(self, G, source):
-    #     dist, pred = search.dijkstra_search(G, G.ep.weight, source, Visitor())
-    #     return dist, pred
-
-    # def route(self, G, source, target):
-    #     try:
-    #         path = networkx.shortest_path(G, source, target, 'weight')
-    #         found = True
-    #     except networkx.exception.NetworkXNoPath:
-    #         path = [source, target]
-    #         found = False
-    #     return path, found
-
     def route(self, G, source, target, tmatrix, opts=None):
         if opts is None:
             opts = {
@@ -658,20 +600,6 @@ class RouteEstimator:
             (y2, x2) = G.nodes[b]["pos"][1], G.nodes[b]["pos"][0]
             return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
 
-        def dist2(a, b):
-            (y1, x1) = G.nodes[a]["pos"][1], G.nodes[a]["pos"][0]
-            (y2, x2) = G.nodes[b]["pos"][1], G.nodes[b]["pos"][0]
-            xs, xe, ys, ye = 0, 0, 0, 0
-            if x1 < x2:
-                xs, xe = x1, x2
-            else:
-                xs, xe = x2, x1
-            if y1 < y2:
-                ys, ye = y1, y2
-            else:
-                ys, ye = y2, y1
-            return numpy.mean(tmatrix[ys:ye, xs:xe])
-
         try:
             path = networkx.astar_path(G, source, target, dist, "weight")
             centers = list()
@@ -680,9 +608,11 @@ class RouteEstimator:
                 centers.append((int(tlx + (size / 2)), int(tly + (size / 2))))
 
             if opts.get("smooth") is True:
-                # Ramer-Douglas-Peucker from https://stackoverflow.com/questions/2573997/reduce-number-of-points-in-line
+                # Ramer-Douglas-Peucker from
+                # https://stackoverflow.com/questions/2573997/reduce-number-of-points-in-line
                 centers = ramerdouglas(centers, self.r * 1.5)
-                # Linear interpolation from https://stackoverflow.com/questions/52014197/how-to-interpolate-a-2d-curve-in-python
+                # Linear interpolation from
+                # https://stackoverflow.com/questions/52014197/how-to-interpolate-a-2d-curve-in-python
                 X = numpy.array(centers)
                 alpha = numpy.linspace(0, 1, len(path))
                 distance = numpy.cumsum(
@@ -694,7 +624,8 @@ class RouteEstimator:
                 )
                 curve = interpolator(alpha)
                 curve = numpy.round(curve).astype(int)
-                # Spline smoothing from https://stackoverflow.com/questions/52014197/how-to-interpolate-a-2d-curve-in-python
+                # Spline smoothing from
+                # https://stackoverflow.com/questions/52014197/how-to-interpolate-a-2d-curve-in-python
                 X = numpy.array(curve)
                 distance = numpy.cumsum(
                     numpy.sqrt(numpy.sum(numpy.diff(X, axis=0) ** 2, axis=1))
@@ -707,8 +638,6 @@ class RouteEstimator:
                 points_fitted = numpy.vstack(spl(alpha) for spl in splines).T
                 points_fitted = numpy.round(points_fitted).astype(int)
                 centers = points_fitted
-            # TODO: FIX WORKAROUND FOR IMAGES 1000x1000
-            # centers = numpy.clip(centers, 0, 999)
             # Returning pixel coordinates
             path = centers
             found = True

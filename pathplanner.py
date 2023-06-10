@@ -2,7 +2,6 @@ import os
 import time
 import argparse
 import itertools
-import multiprocessing
 
 import cv2 as cv
 import numpy as np
@@ -14,10 +13,9 @@ import tfcnmodel
 import toolbox
 import graphmapx
 
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-# Leitura dos argumentos de linha de comando
 ap = argparse.ArgumentParser()
 ap.add_argument("--extra", action="store_true", help="Run planner on extra images")
 ap.add_argument("--rgb", help="Use TFCN-RGB", action="store_true")
@@ -29,7 +27,6 @@ ap.add_argument(
 ap.add_argument("--outliers", help="Include outliers", action="store_true")
 args = ap.parse_args()
 
-
 if args.rgb:
     COLOR = "rgb"
     WEIGHTS_DIR = "rgb"
@@ -40,13 +37,7 @@ elif args.hsv:
     COLOR = "hsv"
     WEIGHTS_DIR = "hsv"
 
-try:
-    from google.colab import drive, auth
-
-    drive.mount("/content/drive")
-    root = "drive/My Drive/Colab Notebooks/TFCN + Conv2DTranspose (keras)"
-except:
-    root = "."
+root = "."
 
 if args.extra:
     ex = "extra"
@@ -61,7 +52,6 @@ Y_path = os.path.join(root, "dataset", ex, "Y")
 KP_path = os.path.join(root, "dataset", ex, "kp")
 KN_path = os.path.join(root, "dataset", ex, "kn")
 
-# Diretório para as saídas do teste
 output_path__ = os.path.join(root, "results")
 if not os.path.exists(output_path__):
     os.mkdir(output_path__)
@@ -71,10 +61,8 @@ Y = list()
 X_colored = list()
 
 if args.extra:
-
     for imagename in sorted(os.listdir(X_path)):
         if imagename.endswith(".jpg"):
-
             x = toolbox.imread(os.path.join(X_path, imagename), color=COLOR)
             if args.rgb:
                 x_colored = x
@@ -91,7 +79,6 @@ if args.extra:
 
             r__ = 8
 
-            # Teste
             time__ = time.time()
 
             y = tfcn.predict([x])
@@ -122,11 +109,6 @@ if args.extra:
             grid = toolbox.grid_list(np.squeeze(x), r__)
             keypoints = graphmapx.get_keypoints(keypoints_image, grid)
 
-            # th = cv.calcHist(y, [0], None, [100], [0, 1])
-            # th = th.flatten()
-            # tv = np.arange(0, 1, 1/100)
-            # c = 0.5*np.sum(th*tv)/np.sum(th)
-
             C_file = os.path.join(W_path, "c_%02d.hdf5" % (args.test))
             c = np.loadtxt(C_file).item() / 2
 
@@ -142,7 +124,6 @@ if args.extra:
                 os.makedirs(output_path)
 
             for counter, (s, t) in enumerate(itertools.combinations(keypoints, 2)):
-
                 path, found = router.route(G, s, t, T)
 
                 font = cv.FONT_HERSHEY_SIMPLEX
@@ -162,7 +143,6 @@ if args.extra:
                 )
 
 else:
-
     n_samples = 8 if args.outliers else 7
 
     for imagename in sorted(os.listdir(X_path)[:n_samples]):
@@ -184,17 +164,13 @@ else:
     cross_val = sklearn.model_selection.LeaveOneOut()
     cross_val.get_n_splits(X)
 
-    # Total de amostras no dataset original
     N = len(X)
 
-    # Percorre as divisões de conjuntos de treino e teste
     # Leave One Out
     for train_index, test_index in cross_val.split(X):
-
         if test_index + 1 != args.test:
             continue
 
-        # Índice do conjunto de validação
         val_index = (test_index + 1) % N
         train_index = np.array([x for x in train_index if x not in val_index])
 
@@ -229,11 +205,6 @@ else:
         grid = toolbox.grid_list(data.x_test[0], r)
         keypoints = graphmapx.get_keypoints(keypoints_image, grid)
 
-        # th = cv.calcHist(y, [0], None, [100], [0, 1])
-        # th = th.flatten()
-        # tv = np.arange(0, 1, 1/100)
-        # c = 0.5*np.sum(th*tv)/np.sum(th)
-
         C_file = os.path.join(W_path, "c_%02d.hdf5" % (test_index + 1))
         c = np.loadtxt(C_file).item() / 2
 
@@ -255,7 +226,6 @@ else:
         missions = list(itertools.combinations(keypoints, 2))
 
         for counter in tqdm.trange(len(missions), desc="  Map %d " % (test_index + 1)):
-
             (s, t) = missions[counter]
 
             path, found = router.route(G, s, t, T)
