@@ -1,6 +1,5 @@
 import cv2
 import numpy
-import matplotlib
 import networkx
 import scipy.interpolate
 

@@ -1,6 +1,6 @@
 import os
 import multiprocessing
-import cv2 as cv
+import cv2
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -11,13 +11,13 @@ os.environ["QT_LOGGING_RULES"] = "qt5ct.debug=false"
 def imread(path, color="rgb"):
     """Loads image from path"""
     if color == "grayscale":
-        return cv.cvtColor(cv.imread(path), cv.COLOR_BGR2GRAY)
+        return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2GRAY)
     elif color == "rgb":
-        return cv.cvtColor(cv.imread(path), cv.COLOR_BGR2RGB)
+        return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
     elif color == "hsv":
-        return cv.cvtColor(cv.imread(path), cv.COLOR_BGR2HSV)
+        return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2HSV)
     elif color == "rgbh":
-        img = cv.cvtColor(cv.imread(path), cv.COLOR_BGR2RGB)
+        img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
         h, w = img.shape[0:2]
         R = img[:, :, 0].flatten()
         G = img[:, :, 1].flatten()
@@ -101,7 +101,7 @@ def score(path, ground_truth, r):
         d = min(w - 1, px[1] + int(r / 2))
         t = ground_truth[a:b, c:d]
         t = t.mean(axis=2) / 255
-        t = cv.erode(t, np.ones((int(r / 2), int(r / 2)), np.uint8), iterations=1)
+        t = cv2.erode(t, np.ones((int(r / 2), int(r / 2)), np.uint8), iterations=1)
         T.append(np.mean(t))
     for i, t in enumerate(T):
         if i < len(T) - 1 and i > 0:
@@ -113,15 +113,15 @@ def score(path, ground_truth, r):
 def draw_path(image, path, color=(0, 255, 0), found=False):
     image_copy = image.copy()
     if len(image_copy.shape) < 3:
-        image_copy = cv.cvtColor(image_copy, cv.COLOR_GRAY2RGB)
+        image_copy = cv2.cvtColor(image_copy, cv2.COLOR_GRAY2RGB)
     centers = [(p[0], p[1]) for p in path]
-    cv.circle(image_copy, centers[0][::-1], 6, color, -1)
-    cv.circle(image_copy, centers[-1][::-1], 12, color, -1)
+    cv2.circle(image_copy, centers[0][::-1], 6, color, -1)
+    cv2.circle(image_copy, centers[-1][::-1], 12, color, -1)
     if found:
         for k in range(len(centers) - 1):
             r0, c0 = centers[k]
             r1, c1 = centers[k + 1]
-            cv.line(image_copy, (c0, r0), (c1, r1), color, 5)
+            cv2.line(image_copy, (c0, r0), (c1, r1), color, 5)
     return image_copy
 
 

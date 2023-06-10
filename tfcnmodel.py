@@ -6,23 +6,20 @@ warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
-from contextlib import redirect_stderr
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import (
+    Conv2D,
+    MaxPooling2D,
+    Dropout,
+    Conv2DTranspose,
+    UpSampling2D,
+)
+from tensorflow.python.keras.callbacks import ModelCheckpoint
 
-with redirect_stderr(open(os.devnull, "w")):
-    from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import (
-        Conv2D,
-        MaxPooling2D,
-        Dropout,
-        Conv2DTranspose,
-        UpSampling2D,
-    )
-    from tensorflow.keras.callbacks import ModelCheckpoint
-
-    from tensorflow.keras.layers import BatchNormalization
-    from tensorflow.keras.callbacks import EarlyStopping
-    from tensorflow.keras.preprocessing.image import ImageDataGenerator
-    from keras import regularizers
+from keras.layers import BatchNormalization
+from tensorflow.python.keras.callbacks import EarlyStopping
+from keras.preprocessing.image import ImageDataGenerator
+from keras import regularizers
 
 Data = collections.namedtuple("Data", "x_train y_train x_val y_val x_test y_test")
 
