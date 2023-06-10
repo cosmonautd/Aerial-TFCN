@@ -79,7 +79,9 @@ metrics, along with average time to generate the traversability matrix, the trav
 generate paths. It requires the weights and cut thresholds obtained in the training phase.
 
 ```
-usage: experiments.py [-h] [--rgb] [--grayscale] [--outliers] [--no-normalization] [--fixed-cut-threshold FIXED_CUT_THRESHOLD] [--disable-cut-threshold] [--disable-path-smoothing]
+usage: experiments.py [-h] [--rgb] [--grayscale] [--outliers] [--no-normalization]
+                      [--fixed-cut-threshold FIXED_CUT_THRESHOLD]
+                      [--disable-cut-threshold] [--disable-path-smoothing]
 
 options:
   -h, --help            show this help message and exit
